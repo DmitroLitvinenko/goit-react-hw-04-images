@@ -1,74 +1,71 @@
-import { Component } from 'react';
+import { useEffect, useState } from 'react';
 import { SearchBar } from './SearchBar/SearchBar';
-import { fetchImages } from '../api';
+import { fetchImagesApi } from '../api';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Button } from './Button/Button';
 import { Modal } from './Modal/Modal';
 import { Loader } from './Loader/Loader';
 
-export class App extends Component {
-  state = {
-    images: [],
-    query: '',
-    page: 1,
-    loading: false,
-    showModal: false,
-    largeImageURL: '',
-  };
+export const App = () => {
+  const [images, setImages] = useState([]);
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [largeImageURL, setLargeImageURL] = useState('');
 
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.query !== this.state.query) {
-      this.fetchImages();
+  useEffect(() => {
+    if (query !== '') {
+      fetchImages();
     }
-    if (prevState.images.length !== this.state.images.length) {
+  }, [query]);
+
+  useEffect(() => {
+    if (images.length > 0) {
       window.scrollTo({
         top: document.documentElement.scrollHeight,
         behavior: 'smooth',
       });
     }
-  }
+  }, [images]);
 
-  onChangeQuery = query => {
-    this.setState({ query, page: 1, images: [] });
+  const onChangeQuery = query => {
+    setQuery(query);
+    setPage(1);
+    setImages([]);
   };
 
-  fetchImages = () => {
-    const { query, page } = this.state;
+  const fetchImages = () => {
     const params = { query, page };
-
-    this.setState({ loading: true });
-
-    fetchImages(params)
-      .then(images =>
-        this.setState(prevState => ({
-          images: [...prevState.images, ...images],
-          page: prevState.page + 1,
-        }))
-      )
-      .finally(() => this.setState({ loading: false }));
+    setLoading(true);
+    fetchImagesApi(params)
+      .then(images => {
+        setImages(prevImages => [...prevImages, ...images]);
+        setPage(prevPage => prevPage + 1);
+      })
+      .finally(() => setLoading(false));
   };
 
-  openModal = largeImageURL => {
-    this.setState({ showModal: true, largeImageURL });
+  const openModal = largeImageURL => {
+    setShowModal(true);
+    setLargeImageURL(largeImageURL);
   };
 
-  closeModal = () => {
-    this.setState({ showModal: false, largeImageURL: '' });
+  const closeModal = () => {
+    setShowModal(false);
+    setLargeImageURL('');
   };
 
-  render() {
-    const { images, loading, showModal, largeImageURL } = this.state;
-    const shouldRenderLoadMoreButton = images.length > 0 && !loading;
+  const shouldRenderLoadMoreButton = images.length > 0 && !loading;
 
-    return (
-      <div className="App">
-        <SearchBar onSubmit={this.onChangeQuery} />
-        <ImageGallery images={images} onClick={this.openModal} />
-        {loading && <Loader />}
+  return (
+    <div className="App">
+      <SearchBar onSubmit={onChangeQuery} />
+      <ImageGallery images={images} onClick={openModal} />
+      {loading && <Loader />}
 
-        {shouldRenderLoadMoreButton && <Button onClick={this.fetchImages} />}
-        {showModal && <Modal onClose={this.closeModal} src={largeImageURL} />}
-      </div>
-    );
-  }
-}
+      {shouldRenderLoadMoreButton && <Button onClick={fetchImages} />}
+      {showModal && <Modal onClose={closeModal} src={largeImageURL} />}
+    </div>
+  );
+};

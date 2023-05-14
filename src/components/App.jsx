@@ -18,7 +18,7 @@ export const App = () => {
     if (query !== '') {
       fetchImages();
     }
-  }, [query]);
+  }, [fetchImages, query]);
 
   useEffect(() => {
     if (images.length > 0) {

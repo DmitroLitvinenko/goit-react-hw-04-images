@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { SearchBar } from './SearchBar/SearchBar';
-import { fetchImagesApi } from '../api';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Button } from './Button/Button';
 import { Modal } from './Modal/Modal';
 import { Loader } from './Loader/Loader';
+import { fetchImagesApi } from 'api';
 
 export const App = () => {
   const [images, setImages] = useState([]);
@@ -18,7 +18,7 @@ export const App = () => {
     if (query !== '') {
       fetchImages();
     }
-  }, [fetchImages, query]);
+  }, [query]);
 
   useEffect(() => {
     if (images.length > 0) {
@@ -36,13 +36,19 @@ export const App = () => {
   };
 
   const fetchImages = () => {
-    const params = { query, page };
+    const options = {
+      query,
+      page,
+    };
+
     setLoading(true);
-    fetchImagesApi(params)
-      .then(images => {
-        setImages(prevImages => [...prevImages, ...images]);
-        setPage(prevPage => prevPage + 1);
-      })
+
+    fetchImagesApi(options)
+      .then(
+        images => setImages(prevState => [...prevState, ...images]),
+        setPage(prevState => prevState + 1)
+      )
+
       .finally(() => setLoading(false));
   };
 
